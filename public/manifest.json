@@ -1,0 +1,75 @@
+{
+  "name": "Pizza Express - Delivery Premium",
+  "short_name": "PizzaExpress",
+  "description": "Delivery de pizza premium com experiência offline completa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/placeholder.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/placeholder.svg", 
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["food", "shopping", "lifestyle"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "640x1136",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ver Cardápio",
+      "short_name": "Cardápio",
+      "description": "Acesse o cardápio completo",
+      "url": "/menu",
+      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Checkout Expresso",
+      "short_name": "Checkout",
+      "description": "Finalize seu pedido rapidamente",
+      "url": "/express-checkout",
+      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ofertas do Dia",
+      "short_name": "Ofertas",
+      "description": "Veja as promoções especiais",
+      "url": "/menu?promo=true",
+      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "protocol_handlers": [
+    {
+      "protocol": "web+pizza",
+      "url": "/menu?item=%s"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

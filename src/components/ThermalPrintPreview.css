@@ -1,0 +1,61 @@
+/* ===== ESTILOS PARA PREVIEW DE IMPRESSÃO TÉRMICA ===== */
+
+.thermal-preview-container {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.thermal-paper {
+  width: 58mm;
+  background: white;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.thermal-paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    #f0f0f0 0px,
+    #f0f0f0 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+.thermal-content {
+  padding: 12px 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #000;
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #fafafa 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .thermal-paper {
+    width: 100%;
+    max-width: 58mm;
+  }
+  
+  .thermal-content {
+    font-size: 9px;
+  }
+}

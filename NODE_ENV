@@ -1,0 +1,13 @@
+# ===== CONFIGURAÇÃO DE AMBIENTE =====
+# Copie este arquivo para .env e preencha com suas credenciais
+
+# Supabase (obrigatório)
+VITE_SUPABASE_PROJECT_ID="xpgsfovrxguphlvncgwn"
+VITE_SUPABASE_URL="https://xpgsfovrxguphlvncgwn.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_pbOXABvnZIh06kJCKetSJA_6zB6Hqnx"
+
+# Debug (opcional - apenas desenvolvimento)
+# VITE_ENABLE_DEBUG=true
+
+# Ambiente
+# NODE_ENV=production

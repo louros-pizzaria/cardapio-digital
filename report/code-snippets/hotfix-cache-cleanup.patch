@@ -1,0 +1,68 @@
+# HOTFIX CRÍTICO: Limpeza Completa de Cache no Logout
+# Arquivo: src/hooks/useUnifiedAuth.tsx
+
+## PROBLEMA
+O cache de assinatura no localStorage pode permanecer após o logout, causando inconsistências
+quando um novo usuário faz login no mesmo dispositivo/navegador.
+
+## CORREÇÃO
+
+### ANTES (Linha 461 - função clearSubscriptionCache):
+```typescript
+const clearSubscriptionCache = useCallback(() => {
+  if (user) {
+    localStorage.removeItem(`subscription_data_${user.id}`);
+    localStorage.removeItem(`subscription_last_check_${user.id}`);
+  }
+}, [user]);
+```
+
+### DEPOIS (Correção - função clearSubscriptionCache melhorada):
+```typescript
+const clearSubscriptionCache = useCallback(() => {
+  // Limpar cache do usuário atual se existir
+  if (user) {
+    localStorage.removeItem(`subscription_data_${user.id}`);
+    localStorage.removeItem(`subscription_last_check_${user.id}`);
+  }
+  
+  // CRÍTICO: Limpar TODOS os caches de subscription no logout
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('subscription_data_') || 
+        key.startsWith('subscription_last_check_') ||
+        key.startsWith('auth_') ||
+        key.startsWith('login_block')) {
+      localStorage.removeItem(key);
+    }
+  });
+}, [user]);
+```
+
+### ADICIONAL: Melhorar limpeza no signOut (após linha 468):
+```typescript
+// Adicionar após a linha 468 na função signOut
+// Clear all user-related localStorage atomically
+Object.keys(localStorage).forEach(key => {
+  if (key.startsWith('subscription_') || 
+      key.startsWith('login_block') || 
+      key.startsWith('auth_') ||
+      key.startsWith('user_cache_')) {
+    localStorage.removeItem(key);
+  }
+});
+```
+
+## IMPACTO
+✅ **ANTES:** Cache podia permanecer entre logins diferentes
+✅ **DEPOIS:** Limpeza completa e atômica de todos os dados sensíveis
+
+## CENÁRIO DE TESTE
+1. Login com usuário A (com assinatura ativa)
+2. Usar aplicação, gerar cache
+3. Logout
+4. Login com usuário B (sem assinatura)
+5. **Resultado esperado:** Usuário B não deve herdar cache do usuário A
+6. **Resultado antes do fix:** Possível acesso indevido baseado em cache obsoleto
+
+## PRIORIDADE: 🔴 CRÍTICO
+Este fix previne vazamento de estado entre sessões de usuários diferentes.

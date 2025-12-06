@@ -1,0 +1,57 @@
+# HOTFIX CRÍTICO: Correção de Verificação de Assinatura em Rotas
+# Arquivo: src/routes/UnifiedProtectedRoute.tsx
+
+## PROBLEMA
+Atualmente, a verificação de assinatura só acontece se o usuário tentar acessar especificamente `/menu`.
+Isso permite que usuários sem assinatura acessem outras rotas protegidas como `/checkout`, `/orders`, etc.
+
+## CORREÇÃO
+
+### ANTES (Linha 101):
+```typescript
+if (requireSubscription && user && !subscription.loading && !subscription.subscribed && location.pathname === '/menu') {
+  console.log('[ROUTE-GUARD] Redirecting to plans - accessing menu without subscription:', { 
+    user: !!user, 
+    loading: subscription.loading, 
+    subscribed: subscription.subscribed,
+    status: subscription.status,
+    path: location.pathname
+  });
+  return <Navigate to="/plans" replace />;
+}
+```
+
+### DEPOIS (Correção):
+```typescript
+if (requireSubscription && user && !subscription.loading && !subscription.subscribed) {
+  console.log('[ROUTE-GUARD] Redirecting to plans - accessing protected route without subscription:', { 
+    user: !!user, 
+    loading: subscription.loading, 
+    subscribed: subscription.subscribed,
+    status: subscription.status,
+    path: location.pathname
+  });
+  return <Navigate to="/plans" replace />;
+}
+```
+
+## IMPACTO
+✅ **ANTES:** Apenas `/menu` era protegido por assinatura
+✅ **DEPOIS:** TODAS as rotas com `requireSubscription={true}` são protegidas
+
+## ROTAS AFETADAS (que agora serão protegidas corretamente):
+- `/payment/pix`
+- `/payment`
+- `/payment/:orderId`  
+- `/checkout`
+- `/orders`
+- `/order-status/:orderId`
+
+## TESTE MANUAL
+1. Fazer login com usuário SEM assinatura ativa
+2. Tentar acessar diretamente `http://localhost:3000/checkout`
+3. **Resultado esperado:** Redirect automático para `/plans`
+4. **Resultado antes do fix:** Acesso permitido indevidamente
+
+## PRIORIDADE: 🔴 CRÍTICO
+Este fix deve ser aplicado IMEDIATAMENTE para evitar acesso não autorizado a recursos premium.
