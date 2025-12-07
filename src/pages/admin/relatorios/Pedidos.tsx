@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
   Table,
   TableBody,
@@ -31,9 +32,17 @@ const orderStats = [
 export default function Pedidos() {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFakeLoading, setIsFakeLoading] = useState(true);
 
   useEffect(() => {
     fetchOrdersData();
+    
+    // Fake loading por 8 segundos
+    const timer = setTimeout(() => {
+      setIsFakeLoading(false);
+    }, 8000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchOrdersData = async () => {
@@ -127,14 +136,17 @@ export default function Pedidos() {
       {/* Gráfico de Pedidos por Dia */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Pedidos por Dia</h3>
-        <div className="h-64 flex items-end justify-between gap-2">
-          {loading ? (
-            <div className="w-full text-center py-8">Carregando...</div>
-          ) : ordersData.length === 0 ? (
-            <div className="w-full text-center py-8 text-muted-foreground">Nenhum dado disponível</div>
-          ) : ordersData.slice().reverse().map((day, i) => {
-            const maxOrders = Math.max(...ordersData.map(d => d.orders), 1);
-            const height = (day.orders / maxOrders) * 100;
+        {loading || isFakeLoading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : ordersData.length === 0 ? (
+          <div className="w-full text-center py-8 text-muted-foreground">Nenhum dado disponível</div>
+        ) : (
+          <div className="h-64 flex items-end justify-between gap-2">
+            {ordersData.slice().reverse().map((day, i) => {
+              const maxOrders = Math.max(...ordersData.map(d => d.orders), 1);
+              const height = (day.orders / maxOrders) * 100;
             
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
@@ -153,7 +165,8 @@ export default function Pedidos() {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
       </Card>
 
       {/* Tabela Detalhada */}
