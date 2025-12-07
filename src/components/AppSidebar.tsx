@@ -80,7 +80,6 @@ const adminItems: MenuItem[] = [
   { title: "Gerenciar App", url: "/admin/gerenciar-app", icon: Settings2 },
   { title: "Configurações", url: "/admin/configuracoes", icon: Cog },
   { title: "Sistema", url: "/admin/sistema", icon: Server },
-  { title: "Debug Assinatura", url: "/admin/sistema/subscription-debug", icon: Bug, badge: "Admin" },
   { title: "Relatórios", url: "/admin/relatorios", icon: FileText },
   { title: "CRM", url: "/admin/crm", icon: Users },
   { title: "Marketing", url: "/admin/marketing", icon: Megaphone },
