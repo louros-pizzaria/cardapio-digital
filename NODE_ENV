@@ -2,9 +2,9 @@
 # Copie este arquivo para .env e preencha com suas credenciais
 
 # Supabase (obrigatório)
-VITE_SUPABASE_PROJECT_ID="xpgsfovrxguphlvncgwn"
-VITE_SUPABASE_URL="https://xpgsfovrxguphlvncgwn.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_pbOXABvnZIh06kJCKetSJA_6zB6Hqnx"
+VITE_SUPABASE_PROJECT_ID="kvxfnjrqqwbpjmpacvje"
+VITE_SUPABASE_URL="https://kvxfnjrqqwbpjmpacvje.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_J6n9TxWJlQNI2yJOpK7moQ_lQ-xO3Wy"
 
 # Debug (opcional - apenas desenvolvimento)
 # VITE_ENABLE_DEBUG=true

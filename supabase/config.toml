@@ -1,4 +1,4 @@
-project_id = "xpgsfovrxguphlvncgwn"
+project_id = "kvxfnjrqqwbpjmpacvje"
 
 [api]
 enabled = true
@@ -45,7 +45,7 @@ image_transformation = { enabled = true }
 enabled = true
 port = 54327
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://xpgsfovrxguphlvncgwn.supabase.co/auth/v1/callback"]
+additional_redirect_urls = ["https://kvxfnjrqqwbpjmpacvje.supabase.co/auth/v1/callback"]
 jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = false
