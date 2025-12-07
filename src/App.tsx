@@ -248,16 +248,36 @@ const App = () => {
             {/* ===== FASE 6 - RELATÓRIOS ===== */}
             <Route path="/admin/relatorios" element={
               <ProtectedRoute requireAuth={true} requireRole="admin">
-                <Suspense fallback={<OptimizedLoadingSpinner />}>
+                <Suspense fallback={<div />}>
                   <Relatorios />
                 </Suspense>
               </ProtectedRoute>
             }>
-              <Route path="analytics" element={<RelatoriosAnalytics />} />
-              <Route path="pedidos" element={<RelatoriosPedidos />} />
-              <Route path="vendas" element={<RelatoriosVendas />} />
-              <Route path="clientes" element={<RelatoriosClientes />} />
-              <Route path="delivery" element={<RelatoriosDelivery />} />
+              <Route path="analytics" element={
+                <Suspense fallback={<div />}>
+                  <RelatoriosAnalytics />
+                </Suspense>
+              } />
+              <Route path="pedidos" element={
+                <Suspense fallback={<div />}>
+                  <RelatoriosPedidos />
+                </Suspense>
+              } />
+              <Route path="vendas" element={
+                <Suspense fallback={<div />}>
+                  <RelatoriosVendas />
+                </Suspense>
+              } />
+              <Route path="clientes" element={
+                <Suspense fallback={<div />}>
+                  <RelatoriosClientes />
+                </Suspense>
+              } />
+              <Route path="delivery" element={
+                <Suspense fallback={<div />}>
+                  <RelatoriosDelivery />
+                </Suspense>
+              } />
             </Route>
 
             {/* ===== FASE 7 - CRM ===== */}

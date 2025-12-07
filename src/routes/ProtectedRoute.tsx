@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useRole } from '@/hooks/useUnifiedProfile';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -25,15 +24,15 @@ export const ProtectedRoute = ({
   const isLoading = authLoading || roleLoading;
 
   if (isLoading) {
+    // Ocultar spinner visualmente para rotas de relatórios (que têm seu próprio LoaderOne)
+    const isRelatoriosRoute = location.pathname.startsWith('/admin/relatorios');
+    
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={isRelatoriosRoute ? 'hidden' : "min-h-screen flex items-center justify-center"}>
         <div className="text-center space-y-4">
-          <LoadingSpinner />
-          <p className="text-muted-foreground">
-            {requireRole === 'admin' ? 'Verificando permissões...' :
-             requireRole === 'attendant' ? 'Verificando acesso...' :
-             'Carregando...'}
-          </p>
+          <div className="inline-block animate-spin">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
         </div>
       </div>
     );
