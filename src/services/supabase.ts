@@ -3,8 +3,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
-const supabaseUrl = 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGZuanJxcXdicGptcGFjdmplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjQ0MjcsImV4cCI6MjA4MDY0MDQyN30.Hu9fqFzoAk-k5kz16jTinqBWD_p9qB6xacS9KxU6NB8';
+// Usa variáveis de ambiente para suportar múltiplos clientes com bancos diferentes
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2eGZuanJxcXdicGptcGFjdmplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjQ0MjcsImV4cCI6MjA4MDY0MDQyN30.Hu9fqFzoAk-k5kz16jTinqBWD_p9qB6xacS9KxU6NB8';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY devem estar configuradas nas variáveis de ambiente');
+}
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 

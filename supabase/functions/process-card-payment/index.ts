@@ -84,7 +84,7 @@ serve(async (req) => {
         identification: payer.identification
       },
       external_reference: orderId,
-      notification_url: `https://xpgsfovrxguphlvncgwn.supabase.co/functions/v1/mercadopago-webhook`,
+      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
       metadata: {
         order_id: orderId,
         user_id: user.id

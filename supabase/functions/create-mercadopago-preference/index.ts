@@ -98,7 +98,7 @@ serve(async (req) => {
       },
       auto_return: 'approved',
       external_reference: orderId,
-      notification_url: `https://xpgsfovrxguphlvncgwn.supabase.co/functions/v1/mercadopago-webhook`,
+      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
       payer: {
         email: user.email
       }

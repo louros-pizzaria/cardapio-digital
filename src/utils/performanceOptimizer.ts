@@ -82,13 +82,16 @@ class PerformanceOptimizer {
 
   // ===== RESOURCE HINTS =====
   private setupResourceHints() {
+    // Usa variável de ambiente para suportar múltiplos clientes
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xpgsfovrxguphlvncgwn.supabase.co';
+    
     // DNS prefetch for external domains
     const externalDomains = [
       'https://fonts.googleapis.com',
       'https://fonts.gstatic.com',
       'https://js.stripe.com',
       'https://api.mercadopago.com',
-      'https://xpgsfovrxguphlvncgwn.supabase.co'
+      supabaseUrl
     ];
 
     externalDomains.forEach(domain => {
@@ -97,7 +100,7 @@ class PerformanceOptimizer {
 
     // Preconnect to critical origins
     const criticalOrigins = [
-      'https://xpgsfovrxguphlvncgwn.supabase.co',
+      supabaseUrl,
       'https://fonts.gstatic.com'
     ];
 

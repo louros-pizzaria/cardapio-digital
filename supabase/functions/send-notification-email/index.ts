@@ -169,7 +169,7 @@ serve(async (req) => {
               </p>
               
               <p style="margin-top: 20px;">
-                <a href="https://xpgsfovrxguphlvncgwn.supabase.co" 
+                <a href="${Deno.env.get('SUPABASE_URL') || 'https://xpgsfovrxguphlvncgwn.supabase.co'}" 
                    style="background: #f97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   Acessar Painel Admin
                 </a>
