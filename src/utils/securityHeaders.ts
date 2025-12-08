@@ -30,7 +30,7 @@ class SecurityHeadersManager {
 
   private getSecurityConfig(): SecurityConfig {
     const isDevelopment = import.meta.env.DEV;
-    const supabaseUrl = 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
     const supabaseWssUrl = supabaseUrl.replace('https://', 'wss://');
     
     return {
