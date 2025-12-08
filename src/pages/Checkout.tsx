@@ -31,6 +31,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -95,6 +96,7 @@ const Checkout = () => {
     nextOpening,
     scheduleData
   } = useStoreSchedule();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<'review' | 'address' | 'payment' | 'processing'>('review');
   const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [paymentCategory, setPaymentCategory] = useState<PaymentCategory>('online');
@@ -741,7 +743,7 @@ const Checkout = () => {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-3 sm:px-4">
-            <SidebarTrigger className="-ml-1" />
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
             <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
               <Button variant="ghost" size="sm" onClick={handleBack} className="flex items-center gap-2 shrink-0">
                 <ArrowLeft className="h-4 w-4" />

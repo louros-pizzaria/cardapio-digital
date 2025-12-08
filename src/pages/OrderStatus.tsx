@@ -15,12 +15,14 @@ import { OrderChatPanel } from '@/components/OrderChatPanel';
 import { useOrderChat } from '@/hooks/useOrderChat';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useQuery } from '@tanstack/react-query';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const OrderStatus = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { user } = useUnifiedAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [order, setOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -315,7 +317,7 @@ const OrderStatus = () => {
           <AppSidebar />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
+              {!isMobile && <SidebarTrigger className="-ml-1" />}
               <div className="ml-auto">
                 <h1 className="text-xl font-semibold">Status do Pedido</h1>
               </div>

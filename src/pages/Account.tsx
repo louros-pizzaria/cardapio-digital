@@ -14,11 +14,13 @@ import { useAddresses } from '@/hooks/useAddresses';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AppSidebar } from '@/components/AppSidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Account = () => {
   const { user } = useUnifiedAuth();
   const { addresses, loading: addressLoading, addAddress, updateAddress, deleteAddress } = useAddresses();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -178,7 +180,7 @@ const Account = () => {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
             <div className="ml-auto">
               <h1 className="text-xl font-semibold">Minha Conta</h1>
             </div>

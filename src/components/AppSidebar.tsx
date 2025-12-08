@@ -32,6 +32,8 @@ import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useUnifiedStore } from '@/stores/simpleStore';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ClientMobileFooter } from "@/components/ClientMobileFooter";
 
 import {
   Sidebar,
@@ -125,6 +127,7 @@ export function AppSidebar() {
   };
 
   const menuItems = getMenuItems();
+  const isMobile = useIsMobile();
   
   // Check if current route matches item (including nested routes)
   const isRouteActive = (itemUrl: string) => {
@@ -133,6 +136,11 @@ export function AppSidebar() {
     }
     return location.pathname.startsWith(itemUrl);
   };
+
+  // Mobile First: Use Footer Navigation for Clients on Mobile
+  if (isMobile && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/attendant')) {
+    return <ClientMobileFooter />;
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">

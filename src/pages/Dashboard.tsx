@@ -122,7 +122,6 @@ const Dashboard = () => {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            {isMobile && <SidebarTrigger className="-ml-1" />}
             <div className="ml-auto">
               <h1 className="text-xl font-semibold">Dashboard</h1>
             </div>

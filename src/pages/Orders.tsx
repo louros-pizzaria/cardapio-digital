@@ -13,12 +13,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Orders = () => {
   const navigate = useNavigate();
   const { user } = useUnifiedAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const isMobile = useIsMobile();
 
   // Fetch user's orders with complete information
   const { data: orders, isLoading: loading } = useQuery({
@@ -121,7 +123,7 @@ const Orders = () => {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
             <div className="ml-auto">
               <h1 className="text-xl font-semibold">Meus Pedidos</h1>
             </div>

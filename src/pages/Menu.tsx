@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { MenuSkeleton, CategorySkeleton } from "@/components/MenuSkeleton";
 import { FixedCartFooter } from "@/components/FixedCartFooter";
 import { StoreStatusBanner } from "@/components/StoreStatusBanner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Memoized skeleton components
 const MemoizedMenuSkeleton = memo(MenuSkeleton);
@@ -21,6 +22,7 @@ const Menu = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { getItemCount } = useUnifiedStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const {
     categories,
@@ -44,7 +46,7 @@ const Menu = () => {
           <AppSidebar />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
+              {!isMobile && <SidebarTrigger className="-ml-1" />}
               <div className="ml-auto">
                 <h1 className="text-xl font-semibold">Cardápio</h1>
               </div>
@@ -64,7 +66,7 @@ const Menu = () => {
         <AppSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
             <div className="ml-auto">
               <h1 className="text-xl font-semibold">Cardápio</h1>
             </div>

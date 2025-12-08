@@ -7,12 +7,15 @@ import { useUnifiedStore } from '@/stores/simpleStore';
 import { useNavigate } from 'react-router-dom';
 import { useStoreSchedule } from '@/hooks/useStoreSchedule';
 import { StoreClosedAlert } from '@/components/StoreClosedAlert';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export const FixedCartFooter = () => {
   const { items, getTotal, getItemCount } = useUnifiedStore();
   const navigate = useNavigate();
   const { isOpen, scheduleData } = useStoreSchedule();
   const [showClosedAlert, setShowClosedAlert] = useState(false);
+  const isMobile = useIsMobile();
   const itemCount = getItemCount();
   const total = getTotal();
 
@@ -39,7 +42,10 @@ export const FixedCartFooter = () => {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 md:left-64 z-40">
+      <div className={cn(
+        "fixed left-0 right-0 bg-white border-t shadow-lg p-4 md:left-64 z-40 transition-all duration-200",
+        isMobile ? "bottom-16 pb-6" : "bottom-0"
+      )}>
         <div className="max-w-2xl mx-auto">
           <Button 
             className="w-full gradient-pizza text-white h-12 flex items-center justify-between"
