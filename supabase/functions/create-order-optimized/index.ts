@@ -232,12 +232,56 @@ serve(async (req) => {
       );
     }
 
-    const orderData: OrderData = await req.json();
-    console.log('[CREATE-ORDER] User authenticated:', userId);
-    console.log('[CREATE-ORDER] Delivery method received:', orderData.delivery_method);
-    console.log('[CREATE-ORDER] Address ID received:', orderData.address_id);
+    let orderData: OrderData;
+    try {
+      orderData = await req.json();
+    } catch (parseError) {
+      console.error('[CREATE-ORDER-OPTIMIZED] Error parsing request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request body',
+          message: 'Erro ao processar dados do pedido. Verifique se todos os campos estão corretos.'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[CREATE-ORDER-OPTIMIZED] User authenticated:', userId);
+    console.log('[CREATE-ORDER-OPTIMIZED] Order data received:', {
+      items_count: orderData.items?.length || 0,
+      total_amount: orderData.total_amount,
+      delivery_method: orderData.delivery_method,
+      payment_method: orderData.payment_method,
+      address_id: orderData.address_id,
+      has_customer_name: !!orderData.customer_name,
+      has_customer_phone: !!orderData.customer_phone
+    });
+
+    // Validar dados básicos PRIMEIRO (antes de verificar loja)
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      console.error('[CREATE-ORDER-OPTIMIZED] Validation failed: No items provided');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Items are required',
+          message: 'O pedido deve conter pelo menos um item.'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!orderData.total_amount || orderData.total_amount <= 0) {
+      console.error('[CREATE-ORDER-OPTIMIZED] Validation failed: Invalid total amount');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid total amount',
+          message: 'O valor total do pedido deve ser maior que zero.'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // VALIDAÇÃO 0: Verificar se loja está aberta e logar tentativa
+    console.log('[CREATE-ORDER-OPTIMIZED] Checking store status...');
     const storeStatus = await validateStoreIsOpen(
       supabaseClient,
       userId,
@@ -249,37 +293,37 @@ serve(async (req) => {
     );
     
     if (!storeStatus.isOpen) {
-      console.warn('[CREATE-ORDER-OPTIMIZED] Store closed - rejecting order');
+      console.warn('[CREATE-ORDER-OPTIMIZED] Store closed - rejecting order', {
+        error: storeStatus.error,
+        nextOpening: storeStatus.nextOpening
+      });
       return new Response(
         JSON.stringify({
-          error: storeStatus.error,
+          error: storeStatus.error || 'Store closed',
           nextOpening: storeStatus.nextOpening,
-          message: `Não é possível criar pedidos no momento. ${storeStatus.nextOpening ? `Abriremos ${storeStatus.nextOpening}` : ''}`
+          message: `Não é possível criar pedidos no momento. ${storeStatus.nextOpening ? `Abriremos ${storeStatus.nextOpening}` : 'Verifique os horários de funcionamento.'}`
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Validar dados básicos
-    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Items are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('[CREATE-ORDER-OPTIMIZED] ✅ Store is open');
 
     // Validar disponibilidade de produtos
+    console.log('[CREATE-ORDER-OPTIMIZED] Validating product availability...');
     const { valid, errors } = await validateProductAvailability(supabaseClient, orderData.items);
     
     if (!valid) {
+      console.error('[CREATE-ORDER-OPTIMIZED] Product validation failed:', errors);
       return new Response(
         JSON.stringify({ 
-          error: 'Product validation failed', 
+          error: 'Product validation failed',
+          message: errors.length > 0 ? errors[0] : 'Um ou mais produtos não estão disponíveis.',
           details: errors 
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    console.log('[CREATE-ORDER-OPTIMIZED] ✅ Products validated');
 
     // Reservar estoque temporariamente
     reserveStock(orderData.items, userId);

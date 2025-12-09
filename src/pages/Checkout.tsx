@@ -474,9 +474,24 @@ const Checkout = () => {
       }
     );
 
-    if (createError || !createdOrder?.success || !createdOrder?.order?.id) {
+    if (createError) {
       console.error('[CHECKOUT] Error creating order:', createError);
-      throw new Error(createError?.message || 'Erro ao criar pedido');
+      
+      // Extrair mensagem de erro mais detalhada
+      const errorMessage = createError.message || 
+                          (typeof createError === 'object' && 'message' in createError ? createError.message : null) ||
+                          createdOrder?.message ||
+                          'Erro ao criar pedido';
+      
+      throw new Error(errorMessage);
+    }
+
+    if (!createdOrder?.success || !createdOrder?.order?.id) {
+      console.error('[CHECKOUT] Invalid order response:', createdOrder);
+      const errorMessage = createdOrder?.message || 
+                          createdOrder?.error || 
+                          'Erro ao processar resposta do servidor';
+      throw new Error(errorMessage);
     }
 
     const orderId = createdOrder.order.id;

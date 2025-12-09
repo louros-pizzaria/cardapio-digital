@@ -97,3 +97,4 @@ Para ver os logs:
 
 **Após configurar a variável, o erro 500 será resolvido!** 🚀
 
+
