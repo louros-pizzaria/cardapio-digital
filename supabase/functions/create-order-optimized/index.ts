@@ -321,7 +321,7 @@ serve(async (req) => {
       console.error('[CREATE-ORDER-OPTIMIZED] Product validation failed:', errors);
       return new Response(
         JSON.stringify({ 
-          error: 'Product validation failed',
+          error: 'Product validation failed', 
           message: errors.length > 0 ? errors[0] : 'Um ou mais produtos não estão disponíveis.',
           details: errors 
         }),

@@ -32,7 +32,7 @@ serve(async (req) => {
     }
 
     console.log('[GET-PAYMENT-CONFIG] Successfully retrieved public key');
-    
+
     return new Response(
       JSON.stringify({
         mercadopago_public_key: mercadopagoPublicKey

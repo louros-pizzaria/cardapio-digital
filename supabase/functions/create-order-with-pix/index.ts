@@ -256,9 +256,26 @@ serve(async (req) => {
       // Buscar perfil para dados do pagador
       const { data: profile } = await supabaseServiceClient
         .from('profiles')
-        .select('*')
+        .select('full_name, cpf, email')
         .eq('id', user.id)
         .single();
+
+      // Validar se o perfil do usuário tem os dados mínimos para o PIX
+      if (!profile || !profile.full_name || !profile.cpf) {
+        console.error('[CREATE-ORDER-PIX] ❌ Profile validation failed for new flow:', {
+          userId: user.id,
+          has_name: !!profile?.full_name,
+          has_cpf: !!profile?.cpf
+        });
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Dados incompletos',
+            message: 'Para pagamentos com PIX, seu nome completo e CPF precisam estar preenchidos no seu perfil.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       // Criar PIX no MercadoPago
       const paymentData = {
@@ -266,12 +283,12 @@ serve(async (req) => {
         description: `Pedido PizzaClub #${existingOrder.id.slice(-8)}`,
         payment_method_id: 'pix',
         payer: {
-          email: profile?.email || user.email,
-          first_name: profile?.full_name?.split(' ')[0] || 'Cliente',
-          last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'PizzaClub',
+          email: profile.email || user.email,
+          first_name: profile.full_name.split(' ')[0],
+          last_name: profile.full_name.split(' ').slice(1).join(' ') || profile.full_name.split(' ')[0],
           identification: {
             type: 'CPF',
-            number: profile?.cpf?.replace(/\D/g, '') || '00000000000'
+            number: profile.cpf.replace(/\D/g, '')
           }
         },
         external_reference: existingOrder.id,
@@ -455,14 +472,24 @@ serve(async (req) => {
     // ETAPA 2: Validar perfil do usuário
     const { data: profile, error: profileError } = await supabaseServiceClient
       .from('profiles')
-      .select('*')
+      .select('full_name, cpf, email, phone')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || !profile.full_name) {
-      console.error('[CREATE-ORDER-WITH-PIX] ❌ Profile validation failed');
+    if (profileError || !profile || !profile.full_name || !profile.cpf) {
+      console.error('[CREATE-ORDER-PIX] ❌ Profile validation failed for legacy flow:', {
+        userId: user.id,
+        profileExists: !!profile,
+        has_name: !!profile?.full_name,
+        has_cpf: !!profile?.cpf,
+        dbError: profileError
+      });
       return new Response(
-        JSON.stringify({ success: false, error: 'Complete seu perfil antes de continuar' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Dados incompletos',
+          message: 'Para pagamentos com PIX, seu nome completo e CPF precisam estar preenchidos no seu perfil.' 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -476,9 +503,9 @@ serve(async (req) => {
     }
 
     console.log('[CREATE-ORDER-PIX] ✅ User profile retrieved:', {
-      email: profile?.email,
-      full_name: profile?.full_name,
-      cpf: profile?.cpf ? profile.cpf.substring(0, 3) + '***' : 'NOT_PROVIDED'
+      email: profile.email,
+      full_name: profile.full_name,
+      cpf: profile.cpf ? profile.cpf.substring(0, 3) + '***' : 'NOT_PROVIDED'
     });
 
     // ETAPA 3: 🎯 CRIAR PIX REAL COM CHAVE REAL - FASE 1 IMPLEMENTATION
@@ -487,12 +514,12 @@ serve(async (req) => {
       description: `Pedido PizzaClub #${orderData.user_id.slice(-8)}`,
       payment_method_id: 'pix',
       payer: {
-        email: profile?.email || user.email,
-        first_name: profile?.full_name?.split(' ')[0] || 'Cliente',
-        last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'PizzaClub',
+        email: profile.email || user.email,
+        first_name: profile.full_name.split(' ')[0],
+        last_name: profile.full_name.split(' ').slice(1).join(' ') || profile.full_name.split(' ')[0],
         identification: {
           type: 'CPF',
-          number: profile?.cpf?.replace(/\D/g, '') || '00000000000'
+          number: profile.cpf.replace(/\D/g, '')
         }
       },
       external_reference: `temp-${user.id}-${Date.now()}`, // Referência temporária

@@ -135,36 +135,63 @@ export const UnifiedPaymentSystem = ({
 
   // ===== PIX PAYMENT LOGIC =====
   const createPixOrder = async () => {
+    let orderId = '';
     try {
       setIsLoading(true);
       setPaymentStatus('pending');
       clearAllIntervals();
+
+      // Etapa 1: Criar o pedido de forma otimizada
+      console.log('[UNIFIED-PAYMENT] Etapa 1: Criando pedido...');
+      const { data: orderResult, error: orderError } = await supabase.functions.invoke('create-order-optimized', {
+        body: orderData,
+      });
+
+      if (isUnmountedRef.current) return;
       
-      const { data, error } = await supabase.functions.invoke('create-order-with-pix', {
-        body: orderData
+      if (orderError || !orderResult?.success || !orderResult?.order?.id) {
+        console.error('[UNIFIED-PAYMENT] Erro na Etapa 1 (create-order-optimized):', orderError?.message || orderResult);
+        throw new Error(orderResult?.message || orderError?.message || 'Não foi possível criar o seu pedido.');
+      }
+      
+      orderId = orderResult.order.id;
+      console.log('[UNIFIED-PAYMENT] Etapa 1 com sucesso. Pedido ID:', orderId);
+      showMessage(messageSystem.orders.created(orderResult.order?.order_number), toast);
+      localStorage.removeItem('pendingOrder');
+
+      // Etapa 2: Gerar o pagamento PIX para o pedido existente
+      console.log('[UNIFIED-PAYMENT] Etapa 2: Gerando PIX para o pedido ID:', orderId);
+      const { data: pixResult, error: pixError } = await supabase.functions.invoke('create-order-with-pix', {
+        body: { orderId }, // Usando o novo fluxo com orderId
       });
 
       if (isUnmountedRef.current) return;
 
-      if (error || !data?.order || !data?.pixData?.brCode) {
-        throw new Error(error?.message || 'Erro ao gerar PIX');
+      if (pixError || !pixResult?.success || !pixResult?.pixData?.brCode) {
+        console.error('[UNIFIED-PAYMENT] Erro na Etapa 2 (create-order-with-pix):', pixError?.message || pixResult);
+        // Tenta extrair uma mensagem de erro mais clara da função de backend
+        const errorMessage = pixResult?.message || pixError?.message || 'Erro ao gerar o código PIX.';
+        throw new Error(errorMessage);
       }
-
-      setPixData(data.pixData);
+      
+      console.log('[UNIFIED-PAYMENT] Etapa 2 com sucesso. PIX gerado.');
+      setPixData(pixResult.pixData);
       setPaymentStatus('pending');
       setPollingInterval(5000);
       
-      localStorage.removeItem('pendingOrder');
-      showMessage(messageSystem.orders.created(data.order?.order_number), toast);
-      
-      startPixTimer(data.pixData.expiresAt);
-      startPixPolling(data.pixData.transactionId);
+      startPixTimer(pixResult.pixData.expiresAt);
+      startPixPolling(pixResult.pixData.transactionId);
       
     } catch (error: any) {
       if (!isUnmountedRef.current) {
-        console.error('[UNIFIED-PAYMENT] PIX creation error:', error);
+        console.error('[UNIFIED-PAYMENT] Falha no processo de pagamento PIX:', error);
         setPaymentStatus('error');
-        showMessage(messageSystem.payment.pixError(), toast);
+        // Exibe a mensagem de erro específica que veio do backend
+        showMessage({
+          title: 'Pagamento Falhou',
+          description: error.message,
+          variant: 'destructive',
+        }, toast);
       }
     } finally {
       if (!isUnmountedRef.current) {
