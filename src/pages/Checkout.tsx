@@ -479,106 +479,55 @@ const Checkout = () => {
     let createError: any = null;
 
     try {
-      // Garantir que o token está sendo enviado corretamente
-      const authHeader = `Bearer ${session.access_token}`;
-      console.log('[CHECKOUT] Authorization header:', authHeader.substring(0, 30) + '...');
-      console.log('[CHECKOUT] Full token length:', session.access_token?.length);
-      console.log('[CHECKOUT] Token starts with:', session.access_token?.substring(0, 10));
+      console.log('[CHECKOUT] Calling create-order-optimized via supabase.functions.invoke');
       
-      // Usar fetch direto para garantir que o header seja enviado
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
-      const functionUrl = `${supabaseUrl}/functions/v1/create-order-optimized`;
+      const payload = {
+        user_id: user?.id,
+        items: orderData.items,
+        total_amount: orderData.total_amount,
+        delivery_fee: orderData.delivery_fee,
+        payment_method: orderData.payment_method,
+        delivery_method: orderData.delivery_method,
+        address_id: orderData.addressData?.id || null,
+        customer_name: orderData.customer_name,
+        customer_phone: orderData.customer_phone,
+        notes: orderData.notes || ''
+      };
       
-      console.log('[CHECKOUT] Calling function URL:', functionUrl);
-      
-      const fetchResponse = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-        },
-        body: JSON.stringify({
-          user_id: user?.id,
-          items: orderData.items,
-          total_amount: orderData.total_amount,
-          delivery_fee: orderData.delivery_fee,
-          payment_method: orderData.payment_method,
-          delivery_method: orderData.delivery_method,
-          address_id: orderData.addressData?.id || null,
-          customer_name: orderData.customer_name,
-          customer_phone: orderData.customer_phone,
-          notes: orderData.notes || ''
-        })
+      const { data, error } = await supabase.functions.invoke('create-order-optimized', {
+        body: payload
       });
-      
-      console.log('[CHECKOUT] Fetch response status:', fetchResponse.status);
-      
-      if (!fetchResponse.ok) {
-        const errorText = await fetchResponse.text();
-        console.error('[CHECKOUT] Fetch error response:', errorText);
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText, message: `HTTP ${fetchResponse.status}` };
-        }
-        throw new Error(errorData.message || errorData.error || 'Erro ao criar pedido');
-      }
-      
-      const responseData = await fetchResponse.json();
-      console.log('[CHECKOUT] Response data:', responseData);
-      
-      createdOrder = responseData;
-      createError = null;
 
-      // Verificar se a resposta é válida
+      if (error) {
+        console.error('[CHECKOUT] Invoke error details:', error);
+        throw new Error(error.message || 'Erro ao comunicar com o servidor.');
+      }
+
+      console.log('[CHECKOUT] Invoke response data:', data);
+      
+      createdOrder = data;
+
       if (!createdOrder) {
-        console.error('[CHECKOUT] No data in response');
+        console.error('[CHECKOUT] No data in invoke response');
         throw new Error('Nenhuma resposta do servidor');
       }
 
       if (!createdOrder.success || !createdOrder.order?.id) {
-        console.error('[CHECKOUT] Invalid order response:', createdOrder);
-        const errorMessage = createdOrder?.message || 
-                            createdOrder?.error || 
-                            'Erro ao processar resposta do servidor';
+        console.error('[CHECKOUT] Invalid order response from invoke:', createdOrder);
+        const errorMessage = createdOrder?.message || createdOrder?.error || 'Erro ao processar resposta do servidor';
         throw new Error(errorMessage);
       }
     } catch (error: any) {
-      console.error('[CHECKOUT] Exception caught:', error);
-      console.error('[CHECKOUT] Error type:', typeof error);
-      console.error('[CHECKOUT] Error keys:', error ? Object.keys(error) : 'null');
+      console.error('[CHECKOUT] Exception caught during order creation:', error);
+      let errorMessage = 'Erro desconhecido ao criar pedido';
       
-      // Tentar extrair mensagem de várias formas
-      let errorMessage = 'Erro ao criar pedido';
-      
-      // 1. Se já é um Error com mensagem
       if (error instanceof Error) {
         errorMessage = error.message;
-      }
-      // 2. Verificar se há mensagem direta
-      else if (error?.message) {
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
         errorMessage = error.message;
       }
-      // 3. Verificar se há mensagem no contexto
-      else if (error?.context?.message) {
-        errorMessage = error.context.message;
-      }
-      // 4. Verificar se há erro aninhado
-      else if (error?.error?.message) {
-        errorMessage = error.error.message;
-      }
-      // 5. Verificar se há dados no response
-      else if (createdOrder?.message) {
-        errorMessage = createdOrder.message;
-      }
-      // 6. Verificar formato do Supabase
-      else if (typeof error === 'object' && 'error' in error) {
-        errorMessage = error.error || errorMessage;
-      }
       
-      console.error('[CHECKOUT] Final error message:', errorMessage);
+      console.error('[CHECKOUT] Final error message to be thrown:', errorMessage);
       throw new Error(errorMessage);
     }
 
