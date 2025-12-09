@@ -137,6 +137,16 @@ export const UnifiedPaymentSystem = ({
   const createPixOrder = async () => {
     let orderId = '';
     try {
+      // Diagnóstico: Verificar a sessão do usuário antes de chamar a função
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !sessionData.session) {
+        console.error('[UNIFIED-PAYMENT] Diagnóstico: Sessão do usuário não encontrada!', { sessionError, sessionData });
+        throw new Error('Sua sessão expirou ou é inválida. Por favor, faça login novamente antes de continuar.');
+      }
+
+      console.log('[UNIFIED-PAYMENT] Diagnóstico: Sessão do usuário encontrada. O token será enviado.', { userId: sessionData.session.user.id });
+
       setIsLoading(true);
       setPaymentStatus('pending');
       clearAllIntervals();
