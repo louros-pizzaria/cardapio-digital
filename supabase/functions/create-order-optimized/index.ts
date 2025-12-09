@@ -177,24 +177,16 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    console.log('[CREATE-ORDER-OPTIMIZED] Token received:', token.substring(0, 20) + '...');
     
-    // Create Supabase client with user's auth token
+    // Client 1: For user authentication ONLY
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } },
-        auth: { 
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      { auth: { persistSession: false } }
     );
 
-    // Validate token and get user
-    console.log('[CREATE-ORDER-OPTIMIZED] Validating token and getting user...');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Validate token with the user-facing client
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
       console.error('[CREATE-ORDER-OPTIMIZED] Authentication failed:', authError);
@@ -211,6 +203,14 @@ serve(async (req) => {
     const userEmail = user.email;
     
     console.log('[CREATE-ORDER-OPTIMIZED] ✅ User authenticated:', { userId, email: userEmail });
+
+    // Client 2: Admin client for all subsequent database operations
+    const supabaseAdminClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // --- All subsequent calls will use supabaseAdminClient ---
 
     if (!userId) {
       console.error('[CREATE-ORDER-OPTIMIZED] User ID missing after authentication');
@@ -292,7 +292,7 @@ serve(async (req) => {
     // VALIDAÇÃO 0: Verificar se loja está aberta e logar tentativa
     console.log('[CREATE-ORDER-OPTIMIZED] Checking store status...');
     const storeStatus = await validateStoreIsOpen(
-      supabaseClient,
+      supabaseAdminClient,
       userId,
       userEmail,
       {
@@ -319,7 +319,7 @@ serve(async (req) => {
 
     // Validar disponibilidade de produtos
     console.log('[CREATE-ORDER-OPTIMIZED] Validating product availability...');
-    const { valid, errors } = await validateProductAvailability(supabaseClient, orderData.items);
+    const { valid, errors } = await validateProductAvailability(supabaseAdminClient, orderData.items);
     
     if (!valid) {
       console.error('[CREATE-ORDER-OPTIMIZED] Product validation failed:', errors);
@@ -340,7 +340,7 @@ serve(async (req) => {
     try {
       // FASE 2: Buscar perfil completo do usuário (CPF e email)
       console.log('[CREATE-ORDER] 📋 Buscando perfil do usuário para CPF e email');
-      const { data: userProfile } = await supabaseClient
+      const { data: userProfile } = await supabaseAdminClient
         .from('profiles')
         .select('full_name, phone, cpf')
         .eq('id', userId)
@@ -357,7 +357,7 @@ serve(async (req) => {
       let delivery_address_snapshot = null;
       if (orderData.delivery_method === 'delivery' && orderData.address_id) {
         console.log('[CREATE-ORDER] 📍 Fetching address snapshot for delivery order');
-        const { data: addr, error: addrError } = await supabaseClient
+        const { data: addr, error: addrError } = await supabaseAdminClient
           .from('addresses')
           .select('street, number, neighborhood, city, state, zip_code, complement, reference_point')
           .eq('id', orderData.address_id)
@@ -376,7 +376,7 @@ serve(async (req) => {
       }
 
       // Iniciar transação para criar pedido
-      const { data: order, error: orderError } = await supabaseClient
+      const { data: order, error: orderError } = await supabaseAdminClient
         .from('orders')
         .insert({
           user_id: userId,
@@ -416,7 +416,7 @@ serve(async (req) => {
         customizations: item.customizations
       }));
 
-      const { error: itemsError } = await supabaseClient
+      const { error: itemsError } = await supabaseAdminClient
         .from('order_items')
         .insert(orderItems);
 
@@ -424,7 +424,7 @@ serve(async (req) => {
         console.error('Error creating order items:', itemsError);
         
         // Rollback: deletar pedido
-        await supabaseClient
+        await supabaseAdminClient
           .from('orders')
           .delete()
           .eq('id', order.id);
