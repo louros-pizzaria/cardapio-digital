@@ -164,49 +164,54 @@ serve(async (req) => {
   }
 
   try {
+    console.log('[CREATE-ORDER-OPTIMIZED] Request received');
+    
     // Extract and validate JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('Missing Authorization header');
+      console.error('[CREATE-ORDER-OPTIMIZED] Missing Authorization header');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', message: 'Token de autenticação não fornecido' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log('[CREATE-ORDER-OPTIMIZED] Token received:', token.substring(0, 20) + '...');
     
+    // Create Supabase client for authentication
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        auth: { persistSession: false },
-        global: { headers: { Authorization: authHeader } }
+        auth: { persistSession: false }
       }
     );
 
-    // Extraímos userId e email diretamente do JWT (Supabase já validou o token)
-    let userId: string | null = null;
-    let userEmail: string | null = null;
-
-    try {
-      const payloadBase64 = token.split('.')[1];
-      const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
-      const payload = JSON.parse(payloadJson);
-      userId = payload.sub ?? null;
-      userEmail = payload.email ?? payload.user_metadata?.email ?? null;
-    } catch (e) {
-      console.error('Error decoding JWT payload:', e);
+    // Validate token with Supabase (CORRETO - como outras funções fazem)
+    console.log('[CREATE-ORDER-OPTIMIZED] Validating token with Supabase...');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('[CREATE-ORDER-OPTIMIZED] Authentication failed:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ 
+          error: 'Unauthorized',
+          message: authError?.message || 'Token inválido ou expirado. Por favor, faça login novamente.'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const userId = user.id;
+    const userEmail = user.email;
+    
+    console.log('[CREATE-ORDER-OPTIMIZED] ✅ User authenticated:', { userId, email: userEmail });
+
     if (!userId) {
-      console.error('JWT payload missing sub (user id)');
+      console.error('[CREATE-ORDER-OPTIMIZED] User ID missing after authentication');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', message: 'ID do usuário não encontrado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

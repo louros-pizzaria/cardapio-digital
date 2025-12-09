@@ -310,7 +310,21 @@ const Checkout = () => {
       return;
     }
     
+    // Validar que temos um token válido
+    if (!session?.access_token) {
+      console.error('[CHECKOUT] No access token in session');
+      toast({
+        title: "Erro de autenticação",
+        description: "Token de acesso não encontrado. Por favor, faça login novamente.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+    
     console.log('[CHECKOUT] ✅ Session verified:', session.user.id);
+    console.log('[CHECKOUT] ✅ Access token exists:', !!session.access_token);
+    console.log('[CHECKOUT] ✅ Token preview:', session.access_token.substring(0, 20) + '...');
 
     // VALIDAÇÃO 1: Verificar se o sistema de pagamento está configurado
     console.log('[CHECKOUT] Validating online payment eligibility');
@@ -449,14 +463,26 @@ const Checkout = () => {
 
     // FASE 2: CRIAR PEDIDO PRIMEIRO usando create-order-optimized
     console.log('[CHECKOUT] Creating order via edge function before payment redirect');
-    console.log('[CHECKOUT] Session token:', session?.access_token?.substring(0, 20) + '...');
+    console.log('[CHECKOUT] Session exists:', !!session);
+    console.log('[CHECKOUT] Session token exists:', !!session?.access_token);
+    console.log('[CHECKOUT] Session token preview:', session?.access_token?.substring(0, 20) + '...');
     console.log('[CHECKOUT] Delivery method:', orderData.delivery_method);
     console.log('[CHECKOUT] Address ID:', orderData.addressData?.id);
+    
+    // Validar que temos um token válido
+    if (!session?.access_token) {
+      console.error('[CHECKOUT] No access token available');
+      throw new Error('Sessão expirada. Por favor, faça login novamente.');
+    }
     
     let createdOrder: any = null;
     let createError: any = null;
 
     try {
+      // Garantir que o token está sendo enviado corretamente
+      const authHeader = `Bearer ${session.access_token}`;
+      console.log('[CHECKOUT] Authorization header:', authHeader.substring(0, 30) + '...');
+      
       const response = await supabase.functions.invoke(
         'create-order-optimized',
         {
@@ -473,7 +499,7 @@ const Checkout = () => {
             notes: orderData.notes || ''
           },
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: authHeader,
           }
         }
       );
