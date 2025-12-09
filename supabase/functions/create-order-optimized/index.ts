@@ -179,18 +179,22 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     console.log('[CREATE-ORDER-OPTIMIZED] Token received:', token.substring(0, 20) + '...');
     
-    // Create Supabase client for authentication
+    // Create Supabase client with user's auth token
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        auth: { persistSession: false }
+        global: { headers: { Authorization: authHeader } },
+        auth: { 
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
     );
 
-    // Validate token with Supabase (CORRETO - como outras funções fazem)
-    console.log('[CREATE-ORDER-OPTIMIZED] Validating token with Supabase...');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    // Validate token and get user
+    console.log('[CREATE-ORDER-OPTIMIZED] Validating token and getting user...');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
     if (authError || !user) {
       console.error('[CREATE-ORDER-OPTIMIZED] Authentication failed:', authError);
