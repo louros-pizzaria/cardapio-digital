@@ -89,7 +89,8 @@ class SecurityHeadersManager {
           'object-src': ["'none'"],
           'base-uri': ["'self'"],
           'form-action': ["'self'"],
-          'frame-ancestors': ["'none'"],
+          // 'frame-ancestors' não pode ser definido via meta tag, apenas via HTTP header
+          // Configure no servidor/CDN se necessário
           'upgrade-insecure-requests': []
         },
         reportOnly: isDevelopment
