@@ -482,59 +482,55 @@ const Checkout = () => {
       // Garantir que o token está sendo enviado corretamente
       const authHeader = `Bearer ${session.access_token}`;
       console.log('[CHECKOUT] Authorization header:', authHeader.substring(0, 30) + '...');
+      console.log('[CHECKOUT] Full token length:', session.access_token?.length);
+      console.log('[CHECKOUT] Token starts with:', session.access_token?.substring(0, 10));
       
-      const response = await supabase.functions.invoke(
-        'create-order-optimized',
-        {
-          body: {
-            user_id: user?.id,
-            items: orderData.items,
-            total_amount: orderData.total_amount,
-            delivery_fee: orderData.delivery_fee,
-            payment_method: orderData.payment_method,
-            delivery_method: orderData.delivery_method,
-            address_id: orderData.addressData?.id || null,
-            customer_name: orderData.customer_name,
-            customer_phone: orderData.customer_phone,
-            notes: orderData.notes || ''
-          },
-          headers: {
-            Authorization: authHeader,
-          }
+      // Usar fetch direto para garantir que o header seja enviado
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvxfnjrqqwbpjmpacvje.supabase.co';
+      const functionUrl = `${supabaseUrl}/functions/v1/create-order-optimized`;
+      
+      console.log('[CHECKOUT] Calling function URL:', functionUrl);
+      
+      const fetchResponse = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          items: orderData.items,
+          total_amount: orderData.total_amount,
+          delivery_fee: orderData.delivery_fee,
+          payment_method: orderData.payment_method,
+          delivery_method: orderData.delivery_method,
+          address_id: orderData.addressData?.id || null,
+          customer_name: orderData.customer_name,
+          customer_phone: orderData.customer_phone,
+          notes: orderData.notes || ''
+        })
+      });
+      
+      console.log('[CHECKOUT] Fetch response status:', fetchResponse.status);
+      
+      if (!fetchResponse.ok) {
+        const errorText = await fetchResponse.text();
+        console.error('[CHECKOUT] Fetch error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText, message: `HTTP ${fetchResponse.status}` };
         }
-      );
-
-      createdOrder = response.data;
-      createError = response.error;
-
-      // Se houver erro, tentar extrair mensagem do response
-      if (createError) {
-        console.error('[CHECKOUT] Error creating order:', createError);
-        console.error('[CHECKOUT] Error details:', JSON.stringify(createError, null, 2));
-        
-        // Tentar extrair mensagem do erro
-        let errorMessage = 'Erro ao criar pedido';
-        
-        // Verificar se o erro tem uma mensagem
-        if (createError.message) {
-          errorMessage = createError.message;
-        } 
-        // Verificar se há uma mensagem no contexto do erro
-        else if (createError.context?.message) {
-          errorMessage = createError.context.message;
-        }
-        // Verificar se há dados no response que podem conter a mensagem
-        else if (createdOrder?.message) {
-          errorMessage = createdOrder.message;
-        }
-        // Verificar se há erro no formato do Supabase
-        else if (typeof createError === 'object' && 'error' in createError) {
-          errorMessage = createError.error || errorMessage;
-        }
-
-        console.error('[CHECKOUT] Extracted error message:', errorMessage);
-        throw new Error(errorMessage);
+        throw new Error(errorData.message || errorData.error || 'Erro ao criar pedido');
       }
+      
+      const responseData = await fetchResponse.json();
+      console.log('[CHECKOUT] Response data:', responseData);
+      
+      createdOrder = responseData;
+      createError = null;
 
       // Verificar se a resposta é válida
       if (!createdOrder) {
