@@ -453,44 +453,110 @@ const Checkout = () => {
     console.log('[CHECKOUT] Delivery method:', orderData.delivery_method);
     console.log('[CHECKOUT] Address ID:', orderData.addressData?.id);
     
-    const { data: createdOrder, error: createError } = await supabase.functions.invoke(
-      'create-order-optimized',
-      {
-        body: {
-          user_id: user?.id,
-          items: orderData.items,
-          total_amount: orderData.total_amount,
-          delivery_fee: orderData.delivery_fee,
-          payment_method: orderData.payment_method,
-          delivery_method: orderData.delivery_method,
-          address_id: orderData.addressData?.id || null,
-          customer_name: orderData.customer_name,
-          customer_phone: orderData.customer_phone,
-          notes: orderData.notes || ''
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
+    let createdOrder: any = null;
+    let createError: any = null;
+
+    try {
+      const response = await supabase.functions.invoke(
+        'create-order-optimized',
+        {
+          body: {
+            user_id: user?.id,
+            items: orderData.items,
+            total_amount: orderData.total_amount,
+            delivery_fee: orderData.delivery_fee,
+            payment_method: orderData.payment_method,
+            delivery_method: orderData.delivery_method,
+            address_id: orderData.addressData?.id || null,
+            customer_name: orderData.customer_name,
+            customer_phone: orderData.customer_phone,
+            notes: orderData.notes || ''
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          }
         }
+      );
+
+      createdOrder = response.data;
+      createError = response.error;
+
+      // Se houver erro, tentar extrair mensagem do response
+      if (createError) {
+        console.error('[CHECKOUT] Error creating order:', createError);
+        console.error('[CHECKOUT] Error details:', JSON.stringify(createError, null, 2));
+        
+        // Tentar extrair mensagem do erro
+        let errorMessage = 'Erro ao criar pedido';
+        
+        // Verificar se o erro tem uma mensagem
+        if (createError.message) {
+          errorMessage = createError.message;
+        } 
+        // Verificar se há uma mensagem no contexto do erro
+        else if (createError.context?.message) {
+          errorMessage = createError.context.message;
+        }
+        // Verificar se há dados no response que podem conter a mensagem
+        else if (createdOrder?.message) {
+          errorMessage = createdOrder.message;
+        }
+        // Verificar se há erro no formato do Supabase
+        else if (typeof createError === 'object' && 'error' in createError) {
+          errorMessage = createError.error || errorMessage;
+        }
+
+        console.error('[CHECKOUT] Extracted error message:', errorMessage);
+        throw new Error(errorMessage);
       }
-    );
 
-    if (createError) {
-      console.error('[CHECKOUT] Error creating order:', createError);
-      
-      // Extrair mensagem de erro mais detalhada
-      const errorMessage = createError.message || 
-                          (typeof createError === 'object' && 'message' in createError ? createError.message : null) ||
-                          createdOrder?.message ||
-                          'Erro ao criar pedido';
-      
-      throw new Error(errorMessage);
-    }
+      // Verificar se a resposta é válida
+      if (!createdOrder) {
+        console.error('[CHECKOUT] No data in response');
+        throw new Error('Nenhuma resposta do servidor');
+      }
 
-    if (!createdOrder?.success || !createdOrder?.order?.id) {
-      console.error('[CHECKOUT] Invalid order response:', createdOrder);
-      const errorMessage = createdOrder?.message || 
-                          createdOrder?.error || 
-                          'Erro ao processar resposta do servidor';
+      if (!createdOrder.success || !createdOrder.order?.id) {
+        console.error('[CHECKOUT] Invalid order response:', createdOrder);
+        const errorMessage = createdOrder?.message || 
+                            createdOrder?.error || 
+                            'Erro ao processar resposta do servidor';
+        throw new Error(errorMessage);
+      }
+    } catch (error: any) {
+      console.error('[CHECKOUT] Exception caught:', error);
+      console.error('[CHECKOUT] Error type:', typeof error);
+      console.error('[CHECKOUT] Error keys:', error ? Object.keys(error) : 'null');
+      
+      // Tentar extrair mensagem de várias formas
+      let errorMessage = 'Erro ao criar pedido';
+      
+      // 1. Se já é um Error com mensagem
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      // 2. Verificar se há mensagem direta
+      else if (error?.message) {
+        errorMessage = error.message;
+      }
+      // 3. Verificar se há mensagem no contexto
+      else if (error?.context?.message) {
+        errorMessage = error.context.message;
+      }
+      // 4. Verificar se há erro aninhado
+      else if (error?.error?.message) {
+        errorMessage = error.error.message;
+      }
+      // 5. Verificar se há dados no response
+      else if (createdOrder?.message) {
+        errorMessage = createdOrder.message;
+      }
+      // 6. Verificar formato do Supabase
+      else if (typeof error === 'object' && 'error' in error) {
+        errorMessage = error.error || errorMessage;
+      }
+      
+      console.error('[CHECKOUT] Final error message:', errorMessage);
       throw new Error(errorMessage);
     }
 
