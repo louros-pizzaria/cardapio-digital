@@ -85,49 +85,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions - Mobile Optimized */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Análise de Receitas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Visualize receitas detalhadas, períodos de maior venda e compare performance.
-            </p>
-            <Button asChild variant="default">
-              <Link to="/admin/dashboard/receitas">
-                Ver Receitas Detalhadas
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Gestão de Assinaturas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Acompanhe assinantes ativos, renovações e métricas de retenção.
-            </p>
-            <Button asChild variant="default">
-              <Link to="/admin/dashboard/assinaturas">
-                Ver Assinaturas
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Gráfico de Evolução */}
       <div className="mb-6">
         <RevenueChart />

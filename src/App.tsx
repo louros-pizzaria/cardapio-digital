@@ -39,7 +39,6 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // NEW ADMIN STRUCTURE - FASE 1 & FASE 3
 const NewAdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
-const AdminReceitas = lazy(() => import("@/pages/admin/dashboard/Receitas"));
 
 // FASE 3 - Gerenciar App
 const GerenciarApp = lazy(() => import("@/pages/admin/gerenciar-app/index"));
@@ -189,13 +188,6 @@ const App = () => {
               <ProtectedRoute requireAuth={true} requireRole="admin">
                 <Suspense fallback={<OptimizedLoadingSpinner />}>
                   <NewAdminDashboard />
-                </Suspense>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/dashboard/receitas" element={
-              <ProtectedRoute requireAuth={true} requireRole="admin">
-                <Suspense fallback={<OptimizedLoadingSpinner />}>
-                  <AdminReceitas />
                 </Suspense>
               </ProtectedRoute>
             } />
