@@ -6,7 +6,6 @@ import { ShoppingCart, DollarSign, Clock, CheckCircle, TrendingUp, ArrowRight } 
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { formatCurrency } from '@/utils/formatting';
 import { RevenueChart } from '@/components/RevenueChart';
-import { AdminAuditLog } from '@/components/AdminAuditLog';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
@@ -136,9 +135,6 @@ export default function AdminDashboard() {
 
       {/* Grid de Informações */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Auditoria e Logs */}
-        <AdminAuditLog />
-
         {/* Top Products */}
         {stats.topSellingProducts.length > 0 && (
           <Card>
