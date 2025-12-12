@@ -6,32 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, Mail, Clock, TrendingUp, Users, DollarSign, BarChart3, AlertCircle, Send } from 'lucide-react';
+import { Bell, Mail } from 'lucide-react';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
-import { useStoreClosedAttempts } from '@/hooks/useStoreClosedAttempts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 export default function Notificacoes() {
   const { settings, isLoading, updateSettings, isUpdating } = useNotificationSettings();
   const [email, setEmail] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
-  
-  // Últimos 30 dias
-  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const endDate = new Date().toISOString();
-  const { attempts, stats, isLoading: isLoadingData } = useStoreClosedAttempts(startDate, endDate);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const handleSaveSettings = () => {
     const updates: any = {};
@@ -42,34 +26,6 @@ export default function Notificacoes() {
 
     if (Object.keys(updates).length > 0) {
       updateSettings(updates);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    if (!settings?.notification_email) {
-      toast.error('Configure um email antes de testar a notificação');
-      return;
-    }
-
-    setIsSendingTest(true);
-    try {
-      const { error } = await supabase.functions.invoke('send-notification-email', {
-        body: {
-          attemptsCount: stats?.total_attempts || 10,
-          timeWindow: '60 minutos',
-          totalRevenue: stats?.total_lost_revenue || 500,
-          uniqueUsers: stats?.unique_users || 5,
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success('Notificação de teste enviada! Verifique seu email.');
-    } catch (error: any) {
-      console.error('[TEST_NOTIFICATION] Error:', error);
-      toast.error(`Erro ao enviar: ${error.message}`);
-    } finally {
-      setIsSendingTest(false);
     }
   };
 
@@ -91,90 +47,6 @@ export default function Notificacoes() {
           Acompanhe e configure alertas para tentativas de pedidos fora do horário
         </p>
       </div>
-
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Tentativas
-              </CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_attempts || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Últimos 30 dias</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Clientes Únicos
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.unique_users || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Usuários diferentes</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Receita Perdida
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">
-                {formatCurrency(Number(stats.total_lost_revenue) || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Valor total dos carrinhos</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Ticket Médio
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(Number(stats.avg_cart_value) || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Por tentativa</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Insights */}
-      {stats && stats.most_common_hour !== null && (
-        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              <CardTitle className="text-blue-900 dark:text-blue-100">Insight de Demanda</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-blue-800 dark:text-blue-200">
-              O horário com <strong>mais tentativas de pedidos</strong> foi às{' '}
-              <strong>{stats.most_common_hour}:00h</strong>.{' '}
-              {stats.most_common_hour >= 22 || stats.most_common_hour <= 6 ? (
-                <span>Considere estender o horário de funcionamento para atender essa demanda.</span>
-              ) : (
-                <span>Há demanda significativa nesse horário.</span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Configurações */}
       <Card>
@@ -319,74 +191,6 @@ export default function Notificacoes() {
               Notificar apenas após este número de tentativas na janela de tempo
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Histórico Recente */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Tentativas Recentes
-          </CardTitle>
-          <CardDescription>Últimas 20 tentativas de pedidos fora do horário</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingData ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : !attempts || attempts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Nenhuma tentativa registrada nos últimos 30 dias</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {attempts.slice(0, 20).map((attempt) => (
-                <div
-                  key={attempt.id}
-                  className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">
-                        {attempt.user_name || attempt.user_email || 'Visitante'}
-                      </p>
-                      {attempt.cart_value && (
-                        <Badge variant="secondary">
-                          {formatCurrency(attempt.cart_value)}
-                        </Badge>
-                      )}
-                      {attempt.cart_items_count && (
-                        <Badge variant="outline">{attempt.cart_items_count} itens</Badge>
-                      )}
-                    </div>
-                    {attempt.user_phone && (
-                      <p className="text-sm text-muted-foreground">{attempt.user_phone}</p>
-                    )}
-                    {attempt.next_opening && (
-                      <p className="text-xs text-muted-foreground">
-                        Próxima abertura: {attempt.next_opening}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right space-y-1">
-                    <p className="text-sm font-medium">
-                      {format(new Date(attempt.attempted_at), "dd/MM/yyyy 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </p>
-                    <Badge variant="outline" className="text-xs">
-                      {attempt.source}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
