@@ -2,7 +2,7 @@ import { useUnifiedAdminData } from '@/hooks/useUnifiedAdminData';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, DollarSign, Clock, CheckCircle, TrendingUp, ArrowRight } from 'lucide-react';
+import { ShoppingCart, DollarSign, Clock, CheckCircle, TrendingUp, ArrowRight, Users } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { formatCurrency } from '@/utils/formatting';
 import { RevenueChart } from '@/components/RevenueChart';
@@ -39,9 +39,6 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.todayOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.pendingOrders} pendentes
-            </p>
           </CardContent>
         </Card>
 
@@ -52,21 +49,18 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.todayRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              Ticket médio: {formatCurrency(stats.averageOrderValue)}
-            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.averageOrderValue)}</div>
             <p className="text-xs text-muted-foreground">
-              Requerem atenção
+              Valor médio por pedido
             </p>
           </CardContent>
         </Card>
@@ -80,6 +74,19 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats.completedOrders}</div>
             <p className="text-xs text-muted-foreground">
               Total de pedidos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Novos Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.newCustomersToday}</div>
+            <p className="text-xs text-muted-foreground">
+              Clientes de primeiro pedido hoje
             </p>
           </CardContent>
         </Card>

@@ -25,6 +25,7 @@ export interface UnifiedAdminStats {
   totalCustomers: number;
   totalUsers: number; // Alias for totalCustomers for backward compatibility
   newCustomersThisMonth: number;
+  lifetimeNewCustomers: number;
   activeCustomers: number;
   customerGrowth: number;
 
@@ -93,7 +94,7 @@ const fetchUnifiedStats = async (): Promise<UnifiedAdminStats> => {
     const [ordersRes, productsRes, customersRes, salesRes] = await Promise.all([
       supabase
         .from('orders')
-        .select('id, status, total_amount, created_at'),
+        .select('id, status, total_amount, created_at, user_id'),
       
       supabase
         .from('products')
@@ -174,6 +175,22 @@ const fetchUnifiedStats = async (): Promise<UnifiedAdminStats> => {
       ? ((newCustomersThisMonth - newCustomersLastMonth) / newCustomersLastMonth) * 100 
       : 0;
 
+    const userOrderCounts: { [userId: string]: number } = {};
+    orders.forEach(order => {
+      if (order.user_id) {
+        userOrderCounts[order.user_id] = (userOrderCounts[order.user_id] || 0) + 1;
+      }
+    });
+
+    const newCustomersToday = orders
+      .filter(order => {
+        const orderDate = new Date(order.created_at);
+        const isToday = orderDate >= today;
+        const isFirstOrder = order.user_id && userOrderCounts[order.user_id] === 1;
+        return isToday && isFirstOrder;
+      })
+      .length;
+
     // Top selling products
     const productSales: Record<string, { sold: number; revenue: number; name: string }> = {};
     sales.forEach(sale => {
@@ -248,6 +265,7 @@ const fetchUnifiedStats = async (): Promise<UnifiedAdminStats> => {
       totalCustomers: customers.length,
       totalUsers: customers.length, // Alias for backward compatibility
       newCustomersThisMonth,
+      newCustomersToday,
       activeCustomers,
       customerGrowth,
 
@@ -418,6 +436,7 @@ export const useUnifiedAdminData = () => {
       totalCustomers: 0,
       totalUsers: 0,
       newCustomersThisMonth: 0,
+      newCustomersToday: 0,
       activeCustomers: 0,
       customerGrowth: 0,
       topSellingProducts: [],
